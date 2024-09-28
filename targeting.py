@@ -1,7 +1,9 @@
-from openai import OpenAI
+from conditioned_gpt import ConditionedGPT
 
 
-class Targeting:
+class Targeting(ConditionedGPT):
+    MODEL = "gpt-4o-mini"
+
     PROMPT = "Twoim zadaniem jest wysłuchanie wypowiedzi i określenie potencjalnej docelowej grupy słuchaczy. Scharakteryzuj grupę ze względu na wiek i/lub wykształcenie/zainteresowania."
 
     SAMPLES = [
@@ -23,25 +25,11 @@ class Targeting:
         ),
     ]
 
-    LLM_MODEL = "gpt-4o-mini"
-
     def __init__(self):
-        self.client = OpenAI()
-
-        self.messages = [{"role": "system", "content": Targeting.PROMPT}]
-        for sample in Targeting.SAMPLES:
-            self.messages.append({"role": "user", "content": sample[0]})
-            self.messages.append({"role": "assistant", "content": sample[1]})
+        super().__init__(Targeting.MODEL, Targeting.PROMPT, Targeting.SAMPLES)
 
     def estimate(self, input: str) -> str:
-        self.messages.append({"role": "user", "content": input})
-
-        completion = self.client.chat.completions.create(
-            model=Targeting.LLM_MODEL,
-            messages=self.messages,
-        )
-
-        res = completion.choices[0].message
+        res = self.request(input)
 
         # If refused, assume hate speech
         if res.refusal:
@@ -52,16 +40,17 @@ class Targeting:
         i = answer.find("grupa docelowa:")
         if i != -1:
             answer = answer[i + len("grupa docelowa:") :]
-        answer = answer.strip()
+        answer = answer.strip(". ").replace(". ", "; ")
 
         return answer
 
 
-targeting = Targeting()
-for input in [
-    """Szanowni Państwo, Drodzy Rodacy! Przed Polską i przed Unią Europejską wiele wyzwań dotyczących bezpieczeństwa i gospodarki. Od tego, jak na nie odpowiemy, zależy nasza przyszłość. Będąc w Unii, możemy wpływać na jej kształt, nadawać kluczowe kierunki. Nasz głos ma znaczenie. Dlatego każdego dnia musimy zabiegać o polskie sprawy w Unii Europejskiej! Nasz wielki rodak – papież święty Jan Paweł II mówił do nas: „Europa potrzebuje Polski, a Polska potrzebuje Europy”. Te słowa są ciągle aktualne. Dlatego musimy aktywnie uczestniczyć w kształtowaniu Wspólnoty, zgodnie z wartościami wyznawanymi przez nas od ponad tysiąca lat. Od momentu, kiedy dołączyliśmy do rodziny chrześcijańskich narodów Europy. Dzisiaj jesteśmy świadkami wielkiego sporu o przyszły kształt Unii Europejskiej. Pojawiają się niepokojące tendencje do federalizacji, mówi się o zmianach traktatów, które ograniczą suwerenność państw członkowskich. Nasza obecność w Unii Europejskiej to polska racja stanu, ale opowiadamy się za Europą wolnych narodów! Europą Ojczyzn! Wiemy, że politycy i urzędnicy unijni bywają czasem trudnym partnerem – przekonywaliśmy się o tym w ostatnich latach wielokrotnie. Interesy unijnej biurokracji oraz niektórych państw członkowskich nieraz bywają sprzeczne z polskimi. W Unii każdego dnia trwa walka, twarda walka o interesy poszczególnych krajów i trzeba o nie skutecznie zabiegać. Dlatego tak ważne będą wybory do Parlamentu Europejskiego, które odbędą się 9 czerwca. Od tego, jakich reprezentantów wybierzemy, będzie zależał kierunek, w którym będzie podążała Unia, oraz jak polskie sprawy w Unii będą prowadzone. Zachęcam Państwa do udziału w tych wyborach.""",
-    """W poprzednim zadaniu składniki każdej sumy były sobie równe. Nie trudno dodać równe liczby. Teraz nauczymy się dodawać różne ułamki o różnych mianownikach. Ważne! Aby dodać ułamki o różnych mianownikach, trzeba najpierw sprowadzić je do wspólnego mianownika, skracając lub rozszerzając. Następnie należy dodać je tak, jak się dodaje ułamki o jednakowych mianownikach.""",
-]:
-    target_group = targeting.estimate(input)
-    print(input)
-    print("->", target_group)
+if __name__ == "__main__":
+    targeting = Targeting()
+    for input in [
+        """Szanowni Państwo, Drodzy Rodacy! Przed Polską i przed Unią Europejską wiele wyzwań dotyczących bezpieczeństwa i gospodarki. Od tego, jak na nie odpowiemy, zależy nasza przyszłość. Będąc w Unii, możemy wpływać na jej kształt, nadawać kluczowe kierunki. Nasz głos ma znaczenie. Dlatego każdego dnia musimy zabiegać o polskie sprawy w Unii Europejskiej! Nasz wielki rodak – papież święty Jan Paweł II mówił do nas: „Europa potrzebuje Polski, a Polska potrzebuje Europy”. Te słowa są ciągle aktualne. Dlatego musimy aktywnie uczestniczyć w kształtowaniu Wspólnoty, zgodnie z wartościami wyznawanymi przez nas od ponad tysiąca lat. Od momentu, kiedy dołączyliśmy do rodziny chrześcijańskich narodów Europy. Dzisiaj jesteśmy świadkami wielkiego sporu o przyszły kształt Unii Europejskiej. Pojawiają się niepokojące tendencje do federalizacji, mówi się o zmianach traktatów, które ograniczą suwerenność państw członkowskich. Nasza obecność w Unii Europejskiej to polska racja stanu, ale opowiadamy się za Europą wolnych narodów! Europą Ojczyzn! Wiemy, że politycy i urzędnicy unijni bywają czasem trudnym partnerem – przekonywaliśmy się o tym w ostatnich latach wielokrotnie. Interesy unijnej biurokracji oraz niektórych państw członkowskich nieraz bywają sprzeczne z polskimi. W Unii każdego dnia trwa walka, twarda walka o interesy poszczególnych krajów i trzeba o nie skutecznie zabiegać. Dlatego tak ważne będą wybory do Parlamentu Europejskiego, które odbędą się 9 czerwca. Od tego, jakich reprezentantów wybierzemy, będzie zależał kierunek, w którym będzie podążała Unia, oraz jak polskie sprawy w Unii będą prowadzone. Zachęcam Państwa do udziału w tych wyborach.""",
+        """W poprzednim zadaniu składniki każdej sumy były sobie równe. Nie trudno dodać równe liczby. Teraz nauczymy się dodawać różne ułamki o różnych mianownikach. Ważne! Aby dodać ułamki o różnych mianownikach, trzeba najpierw sprowadzić je do wspólnego mianownika, skracając lub rozszerzając. Następnie należy dodać je tak, jak się dodaje ułamki o jednakowych mianownikach.""",
+    ]:
+        target_group = targeting.estimate(input)
+        print(input)
+        print("->", target_group)
