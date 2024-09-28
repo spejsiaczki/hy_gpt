@@ -39,7 +39,7 @@ class Sentiment:
                 }
             )
 
-    def estimate(self, input: str):
+    def estimate(self, input: str) -> tuple[str, str, bool]:
         self.messages.append({"role": "user", "content": input})
 
         completion = self.client.chat.completions.create(
@@ -50,11 +50,10 @@ class Sentiment:
         res = completion.choices[0].message
 
         # If refused, set hate speech
-        if "refused" in res:
+        if res.refusal:
             return "negatywny", "niebezpieczne treści", True
 
         content = res.content
-        print(input)
 
         tone = content.split("\n")[0].split(": ")[1].lower().strip()
         emotions = content.split("\n")[1].split(": ")[1].lower().strip()
@@ -64,19 +63,13 @@ class Sentiment:
 
 
 sentiment = Sentiment()
-print(
-    sentiment.estimate(
-        "Niepełnosprawni w naszym kraju nie przyczyniają się do rozwoju gospodarczego."
-    )
-)
-print(sentiment.estimate("Orlen osiągnął rekordowe zyski w tym roku"))
-print(
-    sentiment.estimate(
-        "Prezydent Duda nie wsparł protestujących przeciwko reformie sądownictwa."
-    )
-)
-print(
-    sentiment.estimate(
-        "Cyganie cały czas kradną. Dlatego prezydent miasta zarządził ich deportację."
-    )
-)
+for input in [
+    "Niepełnosprawni w naszym kraju nie przyczyniają się do rozwoju gospodarczego.",
+    "Orlen osiągnął rekordowe zyski w tym roku",
+    "Prezydent Duda nie wsparł protestujących przeciwko reformie sądownictwa.",
+    "Wiemy, że politycy i urzędnicy unijni bywają czasem trudnym partnerem – przekonywaliśmy się o tym w ostatnich latach wielokrotnie. Interesy unijnej biurokracji oraz niektórych państw członkowskich nieraz bywają sprzeczne z polskimi. W Unii każdego dnia trwa walka, twarda walka o interesy poszczególnych krajów i trzeba o nie skutecznie zabiegać.",
+    "Nasza obecność w Unii Europejskiej jest częścią naszej wielkiej wspaniałej historii. Historii Polski, która jest historią wolności.",
+    "Nasz głos ma znaczenie. Dlatego każdego dnia musimy zabiegać o polskie sprawy w Unii Europejskiej!",
+]:
+    print(input)
+    print("->", sentiment.estimate(input))
